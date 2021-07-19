@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  connection: local
+  environment: 
+    VAULT_ADDR: http://127.0.0.1:8200
+    VAULT_TOKEN: root
+    VAULT_SKIP_VERIFY: true
+
+  tasks:
+    - name: "Test 1: print a variable"
+      debug:
+        var: test1_var_secret
+
+    - name: "Test 2: print a list variable"
+      debug:
+        var: test2_var_secret
+
+    - name: "Test 3: print a message using variables"
+      debug:
+        msg: "The value of {{ test3_var_secret }} should be in the vault but {{ test3_var_show }} can be shown"
+
+    - name: "Test 4: print a variable that contains another var"
+      debug:
+        var: test4_var_nested
+
+    - name: "Test 5: use secret as part of a command"
+      command: echo {{ test5_var_secret }}
+      register: test5_output
+
+    - name: "Test 5: print output"
+      debug:
+        var: test5_output
+
+    - name: "Test 6: use secret as part of a command arg"
+      command: 
+        argv: 
+          - echo
+          - "{{ test6_var_secret }}"
+      register: test6_output
+
+    - name: "Test 6: print output"
+      debug:
+        var: test6_output
+
+    - name: "Test 8: use a vault var as a conditional"
+      debug:
+        msg: "TEST 8"
+      when:
+        - test8_var_secret
+
+    - name: "checking on vault"
+      command: vault --help
+      register: check_vault
+
+    - name: "Print vault help output"
+      debug:
+        var: check_vault
+
+    - name: "Login to vault"
+      command: vault login root
+      register: log_vault
+
+    - name: "print login output"
+      debug:
+        var: log_vault
+
+    - name: "write a secret to vault"
+      command: vault kv put kv/test {{ test3_var_show }}={{ test3_var_secret }}
+      register: write_vault
+
+    - name: "print write response"
+      debug:
+        var: write_vault
+
+    - name: "collect secret from vault"
+      command: vault kv get kv/test
+      register: get_vault
+
+    - name: "print get response"
+      debug: 
+        var: get_vault
